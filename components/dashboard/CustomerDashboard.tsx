@@ -9,13 +9,18 @@ import SectionShell from '@/components/ui/SectionShell'
 import PrimoCockpitSection from './PrimoCockpitSection'
 import type { CockpitMetrics, OrdersMetrics } from '@/lib/types'
 
-type ModalId = 'mdm-edr' | 'iam' | 'orders' | null
+type ModalId = 'mdm' | 'edr' | 'saas' | 'orders' | null
 
 function formatDate(iso: string | null): string {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString('fr-FR', {
     year: 'numeric', month: 'short', day: 'numeric',
   })
+}
+
+function pct(num: number | undefined, denom: number | undefined): string {
+  if (!num || !denom) return '—'
+  return `${Math.round((num / denom) * 100)}%`
 }
 
 function ProductTile({
@@ -53,6 +58,9 @@ export default function CustomerDashboard({
   hasEDRThreatdown,
   hasEDRSentinelOne,
   hasIAM,
+  ztdConfigured,
+  devicesEnrolledCount,
+  committedDeviceCount,
   cockpit,
   orders,
 }: {
@@ -65,6 +73,9 @@ export default function CustomerDashboard({
   hasEDRThreatdown: boolean
   hasEDRSentinelOne: boolean
   hasIAM: boolean
+  ztdConfigured?: boolean
+  devicesEnrolledCount?: number
+  committedDeviceCount?: number
   cockpit: CockpitMetrics | null
   orders: OrdersMetrics | null
 }) {
@@ -75,6 +86,8 @@ export default function CustomerDashboard({
     : hasEDRThreatdown ? 'Threatdown'
     : hasEDRSentinelOne ? 'SentinelOne'
     : null
+
+  const enrolledPct = pct(devicesEnrolledCount, committedDeviceCount)
 
   return (
     <>
@@ -119,18 +132,24 @@ export default function CustomerDashboard({
       {/* Product tiles */}
       <div>
         <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Products</p>
-        <div className="flex gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <ProductTile
-            label="MDM / EDR"
-            active={hasMDM || edrActive}
-            summary={[hasMDM && 'MDM', edrType].filter(Boolean).join(' · ') || 'Not activated'}
-            onClick={() => setModal('mdm-edr')}
+            label="MDM"
+            active={hasMDM}
+            summary={hasMDM ? `${enrolledPct} enrolled` : 'Not activated'}
+            onClick={() => setModal('mdm')}
           />
           <ProductTile
-            label="IAM"
+            label="EDR"
+            active={edrActive}
+            summary={edrType ?? 'Not activated'}
+            onClick={() => setModal('edr')}
+          />
+          <ProductTile
+            label="SaaS Management"
             active={hasIAM}
             summary={hasIAM ? 'Activated' : 'Not activated'}
-            onClick={() => setModal('iam')}
+            onClick={() => setModal('saas')}
           />
           <ProductTile
             label="Orders"
@@ -141,21 +160,39 @@ export default function CustomerDashboard({
         </div>
       </div>
 
-      {/* MDM/EDR modal */}
-      {modal === 'mdm-edr' && (
-        <Modal title="MDM / EDR" onClose={() => setModal(null)}>
+      {/* MDM modal */}
+      {modal === 'mdm' && (
+        <Modal title="MDM" onClose={() => setModal(null)}>
           <MetricRow label="MDM activated" value={<YesNo value={hasMDM} />} />
+          <MetricRow
+            label="Devices enrolled"
+            value={
+              devicesEnrolledCount != null && committedDeviceCount != null
+                ? `${devicesEnrolledCount} / ${committedDeviceCount} (${enrolledPct})`
+                : '—'
+            }
+          />
+          <MetricRow
+            label="ZTD configured"
+            value={ztdConfigured != null ? <YesNo value={ztdConfigured} /> : '—'}
+          />
+        </Modal>
+      )}
+
+      {/* EDR modal */}
+      {modal === 'edr' && (
+        <Modal title="EDR" onClose={() => setModal(null)}>
           <MetricRow label="EDR activated" value={<YesNo value={edrActive} />} />
-          {edrActive && edrType && (
-            <MetricRow label="EDR type" value={<Badge label={edrType} variant="blue" />} />
+          {edrType && (
+            <MetricRow label="Type" value={<Badge label={edrType} variant="blue" />} />
           )}
         </Modal>
       )}
 
-      {/* IAM modal */}
-      {modal === 'iam' && (
-        <Modal title="IAM" onClose={() => setModal(null)}>
-          <MetricRow label="IAM activated" value={<YesNo value={hasIAM} />} />
+      {/* SaaS Management modal */}
+      {modal === 'saas' && (
+        <Modal title="SaaS Management" onClose={() => setModal(null)}>
+          <MetricRow label="Activated" value={<YesNo value={hasIAM} />} />
         </Modal>
       )}
 

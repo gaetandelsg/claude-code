@@ -49,6 +49,9 @@ export default async function CustomerPage({
           hasEDRThreatdown={p.hasEDRThreatdown ?? false}
           hasEDRSentinelOne={p.hasEDRSentinelOne ?? false}
           hasIAM={p.hasIAM ?? false}
+          ztdConfigured={p.ztdConfigured}
+          devicesEnrolledCount={p.devicesEnrolledCount}
+          committedDeviceCount={p.committedDeviceCount}
           cockpit={cockpit}
           orders={orders}
         />

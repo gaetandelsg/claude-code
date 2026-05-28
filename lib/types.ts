@@ -14,6 +14,9 @@ export interface PostHogGroupProperties {
   trialPeriodEnabled?: boolean
   trialPeriodRemainingDays?: number
   isSelfSignup?: boolean
+  ztdConfigured?: boolean
+  devicesEnrolledCount?: number
+  committedDeviceCount?: number
   [key: string]: unknown
 }
 
