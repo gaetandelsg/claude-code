@@ -1,11 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getCompanyGroup } from '@/lib/posthog/groups'
 import { fetchCockpitMetrics, fetchOrdersMetrics } from '@/lib/posthog/queries'
-import OverallInfoSection from '@/components/dashboard/OverallInfoSection'
-import PrimoCockpitSection from '@/components/dashboard/PrimoCockpitSection'
-import MdmEdrSection from '@/components/dashboard/MdmEdrSection'
-import SaasSection from '@/components/dashboard/SaasSection'
-import OrdersSection from '@/components/dashboard/OrdersSection'
+import CustomerDashboard from '@/components/dashboard/CustomerDashboard'
 import Link from 'next/link'
 
 export const revalidate = 300
@@ -43,21 +39,19 @@ export default async function CustomerPage({
       </div>
 
       <div className="space-y-4">
-        <OverallInfoSection
+        <CustomerDashboard
           name={p.name ?? groupKey}
           activeProducts={activeProducts}
           trialPeriodEnabled={p.trialPeriodEnabled}
           trialPeriodRemainingDays={p.trialPeriodRemainingDays}
           isSelfSignup={p.isSelfSignup}
-        />
-        <PrimoCockpitSection metrics={cockpit} activeProducts={activeProducts} />
-        <MdmEdrSection
           hasMDM={p.hasMDM ?? false}
           hasEDRThreatdown={p.hasEDRThreatdown ?? false}
           hasEDRSentinelOne={p.hasEDRSentinelOne ?? false}
+          hasIAM={p.hasIAM ?? false}
+          cockpit={cockpit}
+          orders={orders}
         />
-        <SaasSection hasIAM={p.hasIAM ?? false} />
-        <OrdersSection metrics={orders} />
       </div>
     </>
   )
