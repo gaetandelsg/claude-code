@@ -4,36 +4,46 @@ import Badge from '@/components/ui/Badge'
 
 export default function OverallInfoSection({
   name,
-  adminName,
-  adminEmail,
   activeProducts,
+  trialPeriodEnabled,
+  trialPeriodRemainingDays,
+  isSelfSignup,
 }: {
   name: string
-  adminName?: string
-  adminEmail?: string
   activeProducts: string[]
+  trialPeriodEnabled?: boolean
+  trialPeriodRemainingDays?: number
+  isSelfSignup?: boolean
 }) {
-  const adminDisplay =
-    adminName && adminEmail
-      ? `${adminName} (${adminEmail})`
-      : adminEmail ?? adminName ?? '—'
-
   return (
     <SectionShell title="Overview">
       <MetricRow label="Company" value={name} />
-      <MetricRow label="Admin contact" value={adminDisplay} />
       <MetricRow
         label="Active products"
         value={
           <div className="flex gap-1 flex-wrap justify-end">
             {activeProducts.length > 0
-              ? activeProducts.map((p) => (
-                  <Badge key={p} label={p} variant="blue" />
-                ))
+              ? activeProducts.map((p) => <Badge key={p} label={p} variant="blue" />)
               : <Badge label="None" variant="gray" />}
           </div>
         }
       />
+      {trialPeriodEnabled && (
+        <MetricRow
+          label="Trial"
+          value={
+            trialPeriodRemainingDays != null
+              ? <Badge label={`${trialPeriodRemainingDays} days left`} variant={trialPeriodRemainingDays <= 7 ? 'red' : 'blue'} />
+              : <Badge label="Active" variant="blue" />
+          }
+        />
+      )}
+      {isSelfSignup != null && (
+        <MetricRow
+          label="Signup type"
+          value={<Badge label={isSelfSignup ? 'Self-signup' : 'Sales-led'} variant="gray" />}
+        />
+      )}
       <MetricRow
         label="Contract / plan dates"
         value={<Badge label="Coming soon (Hyperline)" variant="gray" />}

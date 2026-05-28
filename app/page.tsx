@@ -9,13 +9,18 @@ export default async function HomePage() {
 
   try {
     const groups = await listCompanyGroups()
-    customers = groups.map((g) => ({
-      groupKey: g.group_key,
-      name: g.group_properties.name ?? g.group_key,
-      activeProducts: g.group_properties.active_products ?? [],
-      adminName: g.group_properties.admin_name,
-      adminEmail: g.group_properties.admin_email,
-    }))
+    customers = groups.map((g) => {
+      const p = g.group_properties
+      const activeProducts: string[] = []
+      if (p.hasMDM) activeProducts.push('MDM')
+      if (p.hasEDRThreatdown || p.hasEDRSentinelOne) activeProducts.push('EDR')
+      if (p.hasIAM) activeProducts.push('IAM')
+      return {
+        groupKey: g.group_key,
+        name: p.name ?? g.group_key,
+        activeProducts,
+      }
+    })
   } catch (err) {
     console.error('Failed to load customer groups:', err)
   }

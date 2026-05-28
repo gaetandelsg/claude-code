@@ -1,11 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getCompanyGroup } from '@/lib/posthog/groups'
-import {
-  fetchCockpitMetrics,
-  fetchMdmEdrMetrics,
-  fetchSaasMetrics,
-  fetchOrdersMetrics,
-} from '@/lib/posthog/queries'
+import { fetchCockpitMetrics, fetchOrdersMetrics } from '@/lib/posthog/queries'
 import OverallInfoSection from '@/components/dashboard/OverallInfoSection'
 import PrimoCockpitSection from '@/components/dashboard/PrimoCockpitSection'
 import MdmEdrSection from '@/components/dashboard/MdmEdrSection'
@@ -26,23 +21,15 @@ export default async function CustomerPage({
   const group = await getCompanyGroup(groupKey)
   if (!group) notFound()
 
-  const props = group.group_properties
-  const activeProducts = props.active_products ?? []
+  const p = group.group_properties
 
-  const [cockpit, mdmEdr, saas, orders] = await Promise.all([
-    fetchCockpitMetrics(groupKey, {
-      committed_headcount: props.committed_headcount,
-      hr_system_connected: props.hr_system_connected,
-    }).catch(() => null),
-    fetchMdmEdrMetrics(groupKey, {
-      mdm_activated: props.mdm_activated,
-      committed_device_count: props.committed_device_count,
-      ztd_configured: props.ztd_configured,
-      active_products: activeProducts,
-    }).catch(() => null),
-    fetchSaasMetrics(groupKey, {
-      email_provider_connected: props.email_provider_connected,
-    }).catch(() => null),
+  const activeProducts: string[] = []
+  if (p.hasMDM) activeProducts.push('MDM')
+  if (p.hasEDRThreatdown || p.hasEDRSentinelOne) activeProducts.push('EDR')
+  if (p.hasIAM) activeProducts.push('IAM')
+
+  const [cockpit, orders] = await Promise.all([
+    fetchCockpitMetrics(groupKey).catch(() => null),
     fetchOrdersMetrics(groupKey).catch(() => null),
   ])
 
@@ -52,21 +39,24 @@ export default async function CustomerPage({
         <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 mb-2 inline-block">
           ← All customers
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">
-          {props.name ?? groupKey}
-        </h1>
+        <h1 className="text-xl font-semibold text-gray-900">{p.name ?? groupKey}</h1>
       </div>
 
       <div className="space-y-4">
         <OverallInfoSection
-          name={props.name ?? groupKey}
-          adminName={props.admin_name}
-          adminEmail={props.admin_email}
+          name={p.name ?? groupKey}
           activeProducts={activeProducts}
+          trialPeriodEnabled={p.trialPeriodEnabled}
+          trialPeriodRemainingDays={p.trialPeriodRemainingDays}
+          isSelfSignup={p.isSelfSignup}
         />
         <PrimoCockpitSection metrics={cockpit} activeProducts={activeProducts} />
-        <MdmEdrSection metrics={mdmEdr} />
-        <SaasSection metrics={saas} />
+        <MdmEdrSection
+          hasMDM={p.hasMDM ?? false}
+          hasEDRThreatdown={p.hasEDRThreatdown ?? false}
+          hasEDRSentinelOne={p.hasEDRSentinelOne ?? false}
+        />
+        <SaasSection hasIAM={p.hasIAM ?? false} />
         <OrdersSection metrics={orders} />
       </div>
     </>
