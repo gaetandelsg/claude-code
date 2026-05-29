@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${geist.variable} h-full`}>
       <body className="min-h-full bg-primo-bg text-primo-dark">
         <header className="bg-primo-dark px-6 py-3 flex items-center gap-3">
-          <img src="/logo.png" alt="Primo" className="h-6 w-auto brightness-0 invert" />
+          <img src="/logo.png" alt="Primo" style={{ height: '24px', width: 'auto', filter: 'brightness(0) invert(1)' }} />
           <span className="text-white/30 text-sm">·</span>
           <span className="text-white/50 text-sm">CS Dashboard</span>
         </header>
