@@ -28,7 +28,7 @@ export default async function HomePage() {
   return (
     <>
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Customers</h1>
+        <h1 className="text-xl font-semibold text-primo-dark">Customers</h1>
         <p className="text-sm text-gray-400 mt-0.5">{customers.length} companies</p>
       </div>
       <CustomerSearch customers={customers} />

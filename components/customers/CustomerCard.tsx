@@ -6,10 +6,9 @@ export default function CustomerCard({ customer }: { customer: CustomerSummary }
   return (
     <Link
       href={`/customers/${encodeURIComponent(customer.groupKey)}`}
-      className="block border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-sm transition-all"
+      className="block bg-white rounded-2xl shadow-sm p-5 hover:shadow-md transition-all"
     >
-      <p className="font-semibold text-gray-900 mb-1 truncate">{customer.name}</p>
-
+      <p className="font-semibold text-primo-dark mb-3 truncate">{customer.name}</p>
       <div className="flex flex-wrap gap-1">
         {customer.activeProducts.length > 0
           ? customer.activeProducts.map((p) => (

@@ -37,13 +37,18 @@ function ProductTile({
   return (
     <button
       onClick={onClick}
-      className="flex-1 border border-gray-200 rounded-xl p-4 text-left hover:border-blue-300 hover:shadow-sm transition-all bg-white"
+      className="bg-white rounded-2xl shadow-sm p-4 text-left hover:shadow-md transition-all w-full"
     >
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold text-gray-800">{label}</span>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-sm font-semibold text-primo-dark">{label}</span>
         <Badge label={active ? 'Active' : 'Inactive'} variant={active ? 'green' : 'gray'} />
       </div>
       <p className="text-xs text-gray-400">{summary}</p>
+      {active && (
+        <div className="mt-3 h-1 rounded-full bg-gray-100 overflow-hidden">
+          <div className="h-full w-full rounded-full bg-[#0EC8CC]" />
+        </div>
+      )}
     </button>
   )
 }

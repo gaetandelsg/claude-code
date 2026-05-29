@@ -1,10 +1,10 @@
 type Variant = 'green' | 'gray' | 'blue' | 'red'
 
 const variants: Record<Variant, string> = {
-  green: 'bg-green-100 text-green-800',
-  gray: 'bg-gray-100 text-gray-600',
-  blue: 'bg-blue-100 text-blue-800',
-  red: 'bg-red-100 text-red-700',
+  green: 'bg-[#E6FAF9] text-[#0EC8CC]',
+  gray:  'bg-gray-100 text-gray-500',
+  blue:  'bg-[#E6FAF9] text-[#0EC8CC]',
+  red:   'bg-red-50 text-red-600',
 }
 
 export default function Badge({

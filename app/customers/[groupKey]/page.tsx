@@ -32,10 +32,10 @@ export default async function CustomerPage({
   return (
     <>
       <div className="mb-6">
-        <Link href="/" className="text-sm text-gray-400 hover:text-gray-600 mb-2 inline-block">
+        <Link href="/" className="text-xs text-gray-400 hover:text-[#0EC8CC] mb-2 inline-flex items-center gap-1 transition-colors">
           ← All customers
         </Link>
-        <h1 className="text-xl font-semibold text-gray-900">{p.name ?? groupKey}</h1>
+        <h1 className="text-xl font-semibold text-primo-dark">{p.name ?? groupKey}</h1>
       </div>
 
       <div className="space-y-4">

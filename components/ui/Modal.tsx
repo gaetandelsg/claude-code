@@ -27,15 +27,15 @@ export default function Modal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">{title}</h3>
+          <h3 className="font-semibold text-primo-dark text-sm">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+            className="text-gray-300 hover:text-gray-500 text-xl leading-none transition-colors"
           >
             ×
           </button>
         </div>
-        <div className="px-6 py-5 space-y-0">{children}</div>
+        <div className="px-6 py-4">{children}</div>
       </div>
     </div>
   )
