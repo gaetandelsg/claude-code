@@ -206,6 +206,44 @@ export default function CustomerDashboard({
         <Modal title="Orders" onClose={() => setModal(null)}>
           <MetricRow label="Total orders" value={orders?.totalOrders ?? 0} />
           <MetricRow label="Last order" value={formatDate(orders?.lastOrderDate ?? null)} />
+          {(orders?.recentOrders?.length ?? 0) > 0 && (
+            <div className="mt-4">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Recent orders</p>
+              <div className="space-y-3">
+                {orders!.recentOrders.map((order, i) => (
+                  <div key={i} className="bg-gray-50 rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-mono text-gray-500">{order.reference ?? '—'}</span>
+                      <div className="flex items-center gap-2">
+                        {order.status && (
+                          <Badge label={order.status} variant="gray" />
+                        )}
+                        <span className="text-xs text-gray-400">{formatDate(order.date)}</span>
+                      </div>
+                    </div>
+                    {order.products.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {order.products.map((p, j) => (
+                          <li key={j} className="flex items-center justify-between text-sm">
+                            <span className="text-gray-700">{p.name}</span>
+                            {p.priceNoVAT != null && (
+                              <span className="text-gray-400 text-xs">{p.priceNoVAT.toLocaleString('fr-FR')} €</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {order.priceNoVAT != null && (
+                      <div className="mt-2 pt-1.5 border-t border-gray-200 flex justify-between text-xs">
+                        <span className="text-gray-400">Total HT</span>
+                        <span className="font-medium text-primo-dark">{order.priceNoVAT.toLocaleString('fr-FR')} €</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </Modal>
       )}
     </>

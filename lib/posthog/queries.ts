@@ -1,6 +1,6 @@
 import 'server-only'
 import { phPost } from './client'
-import type { HogQLResult, AdminRecord, CockpitMetrics, OrdersMetrics } from '../types'
+import type { HogQLResult, AdminRecord, CockpitMetrics, OrdersMetrics, OrderRecord, OrderProduct } from '../types'
 
 async function runHogQL(query: string): Promise<HogQLResult> {
   return phPost<HogQLResult>('/query/', {
@@ -63,18 +63,69 @@ export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetr
 export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetrics> {
   const gk = groupKey.replace(/'/g, "\\'")
 
-  const result = await runHogQL(`
-    SELECT
-      count()        AS total_orders,
-      max(timestamp) AS last_order_date
-    FROM events
-    WHERE event = 'order_placed'
-      AND $group_1 = '${gk}'
-  `)
+  const [summaryResult, recentResult] = await Promise.all([
+    runHogQL(`
+      SELECT
+        count()        AS total_orders,
+        max(timestamp) AS last_order_date
+      FROM events
+      WHERE event = 'order_placed'
+        AND $group_1 = '${gk}'
+    `),
+    runHogQL(`
+      SELECT
+        properties.order.reference      AS reference,
+        properties.order.priceNoVAT     AS price,
+        properties.order.productsInOrder AS products,
+        properties.order.status         AS status,
+        timestamp
+      FROM events
+      WHERE event = 'order_placed'
+        AND $group_1 = '${gk}'
+      ORDER BY timestamp DESC
+      LIMIT 10
+    `),
+  ])
 
-  const row = firstRow(result)
+  const summaryRow = firstRow(summaryResult)
+
+  const recentOrders: OrderRecord[] = recentResult.results.map((row) => {
+    let products: OrderProduct[] = []
+    const rawProducts = row[2]
+    if (Array.isArray(rawProducts)) {
+      products = rawProducts.map((p: unknown) => {
+        const item = p as Record<string, unknown>
+        return {
+          name: String(item?.name ?? ''),
+          priceNoVAT: item?.priceNoVAT != null ? Number(item.priceNoVAT) : undefined,
+        }
+      })
+    } else if (typeof rawProducts === 'string') {
+      try {
+        const parsed = JSON.parse(rawProducts)
+        if (Array.isArray(parsed)) {
+          products = parsed.map((p: Record<string, unknown>) => ({
+            name: String(p?.name ?? ''),
+            priceNoVAT: p?.priceNoVAT != null ? Number(p.priceNoVAT) : undefined,
+          }))
+        }
+      } catch {
+        // unparseable, leave empty
+      }
+    }
+
+    return {
+      reference: (row[0] as string | null) ?? null,
+      priceNoVAT: row[1] != null ? Number(row[1]) : null,
+      products,
+      status: (row[3] as string | null) ?? null,
+      date: String(row[4] ?? ''),
+    }
+  })
+
   return {
-    totalOrders: Number(row[0] ?? 0),
-    lastOrderDate: (row[1] as string | null) ?? null,
+    totalOrders: Number(summaryRow[0] ?? 0),
+    lastOrderDate: (summaryRow[1] as string | null) ?? null,
+    recentOrders,
   }
 }

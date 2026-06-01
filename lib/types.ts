@@ -45,7 +45,21 @@ export interface CockpitMetrics {
   pendingOffboardings: number
 }
 
+export interface OrderProduct {
+  name: string
+  priceNoVAT?: number
+}
+
+export interface OrderRecord {
+  reference: string | null
+  priceNoVAT: number | null
+  products: OrderProduct[]
+  status: string | null
+  date: string
+}
+
 export interface OrdersMetrics {
   totalOrders: number
   lastOrderDate: string | null
+  recentOrders: OrderRecord[]
 }
