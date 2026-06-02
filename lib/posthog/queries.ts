@@ -1,6 +1,6 @@
 import 'server-only'
 import { phPost } from './client'
-import type { HogQLResult, AdminRecord, CockpitMetrics, OrdersMetrics, OrderRecord, OrderProduct } from '../types'
+import type { HogQLResult, AdminRecord, CockpitMetrics, MdmMetrics, OrdersMetrics, OrderRecord, OrderProduct } from '../types'
 
 async function runHogQL(query: string): Promise<HogQLResult> {
   return phPost<HogQLResult>('/query/', {
@@ -57,6 +57,21 @@ export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetr
     admins,
     pendingOnboardings: Number(firstRow(onboardResult)[0] ?? 0),
     pendingOffboardings: Number(firstRow(offboardResult)[0] ?? 0),
+  }
+}
+
+export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
+  const gk = groupKey.replace(/'/g, "\\'")
+
+  const result = await runHogQL(`
+    SELECT count(DISTINCT properties.id) AS enrolled_count
+    FROM events
+    WHERE event = 'DeviceEvent'
+      AND $group_1 = '${gk}'
+  `)
+
+  return {
+    enrolledDeviceCount: Number(firstRow(result)[0] ?? 0),
   }
 }
 

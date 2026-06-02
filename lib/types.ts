@@ -39,6 +39,10 @@ export interface AdminRecord {
   last_seen: string | null
 }
 
+export interface MdmMetrics {
+  enrolledDeviceCount: number
+}
+
 export interface CockpitMetrics {
   admins: AdminRecord[]
   pendingOnboardings: number

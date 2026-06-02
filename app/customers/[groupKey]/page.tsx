@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getCompanyGroup } from '@/lib/posthog/groups'
-import { fetchCockpitMetrics, fetchOrdersMetrics } from '@/lib/posthog/queries'
+import { fetchCockpitMetrics, fetchMdmMetrics, fetchOrdersMetrics } from '@/lib/posthog/queries'
 import CustomerDashboard from '@/components/dashboard/CustomerDashboard'
 import Link from 'next/link'
 
@@ -24,8 +24,9 @@ export default async function CustomerPage({
   if (p.hasEDRThreatdown || p.hasEDRSentinelOne) activeProducts.push('EDR')
   if (p.hasIAM) activeProducts.push('IAM')
 
-  const [cockpit, orders] = await Promise.all([
+  const [cockpit, mdm, orders] = await Promise.all([
     fetchCockpitMetrics(groupKey).catch(() => null),
+    fetchMdmMetrics(groupKey).catch(() => null),
     fetchOrdersMetrics(groupKey).catch(() => null),
   ])
 
@@ -50,7 +51,7 @@ export default async function CustomerPage({
           hasEDRSentinelOne={p.hasEDRSentinelOne ?? false}
           hasIAM={p.hasIAM ?? false}
           ztdConfigured={p.ztdConfigured}
-          devicesEnrolledCount={p.devicesEnrolledCount}
+          devicesEnrolledCount={mdm?.enrolledDeviceCount ?? p.devicesEnrolledCount}
           committedDeviceCount={p.committedDeviceCount}
           cockpit={cockpit}
           orders={orders}
