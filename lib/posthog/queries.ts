@@ -64,10 +64,10 @@ export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
   const gk = groupKey.replace(/'/g, "\\'")
 
   const result = await runHogQL(`
-    SELECT count(DISTINCT properties.id) AS enrolled_count
+    SELECT count() AS deployed_count
     FROM events
-    WHERE event = 'DeviceEvent'
-      AND $group_1 = '${gk}'
+    WHERE event = 'instance_mdm_deployed_configured'
+      AND properties.id = '${gk}'
   `)
 
   return {
@@ -85,7 +85,7 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
         max(timestamp) AS last_order_date
       FROM events
       WHERE event = 'order_placed'
-        AND $group_1 = '${gk}'
+        AND properties.company.id = '${gk}'
     `),
     runHogQL(`
       SELECT
@@ -96,7 +96,7 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
         timestamp
       FROM events
       WHERE event = 'order_placed'
-        AND $group_1 = '${gk}'
+        AND properties.company.id = '${gk}'
       ORDER BY timestamp DESC
       LIMIT 10
     `),
