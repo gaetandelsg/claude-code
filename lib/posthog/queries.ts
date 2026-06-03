@@ -78,7 +78,7 @@ export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
 export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetrics> {
   const gk = groupKey.replace(/'/g, "\\'")
 
-  const [summaryResult, recentResult] = await Promise.all([
+  const [summaryResult, sixMonthResult, countriesResult, recentResult] = await Promise.all([
     runHogQL(`
       SELECT
         count()        AS total_orders,
@@ -89,10 +89,27 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
     `),
     runHogQL(`
       SELECT
-        properties.order.reference      AS reference,
-        properties.order.priceNoVAT     AS price,
+        count()                                                         AS orders_6m,
+        sum(toFloat64OrZero(toString(properties.order.priceNoVAT)))    AS amount_6m
+      FROM events
+      WHERE event = 'order_placed'
+        AND properties.company.id = '${gk}'
+        AND timestamp >= now() - INTERVAL 6 MONTH
+    `),
+    runHogQL(`
+      SELECT count(DISTINCT properties.order.shippingAddress.country) AS countries
+      FROM events
+      WHERE event = 'order_placed'
+        AND properties.company.id = '${gk}'
+        AND properties.order.shippingAddress.country IS NOT NULL
+        AND properties.order.shippingAddress.country != ''
+    `),
+    runHogQL(`
+      SELECT
+        properties.order.reference       AS reference,
+        properties.order.priceNoVAT      AS price,
         properties.order.productsInOrder AS products,
-        properties.order.status         AS status,
+        properties.order.status          AS status,
         timestamp
       FROM events
       WHERE event = 'order_placed'
@@ -103,6 +120,8 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
   ])
 
   const summaryRow = firstRow(summaryResult)
+  const sixMonthRow = firstRow(sixMonthResult)
+  const countriesRow = firstRow(countriesResult)
 
   const recentOrders: OrderRecord[] = recentResult.results.map((row) => {
     let products: OrderProduct[] = []
@@ -141,6 +160,9 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
   return {
     totalOrders: Number(summaryRow[0] ?? 0),
     lastOrderDate: (summaryRow[1] as string | null) ?? null,
+    ordersLast6m: Number(sixMonthRow[0] ?? 0),
+    amountLast6m: Number(sixMonthRow[1] ?? 0),
+    shippedCountries: Number(countriesRow[0] ?? 0),
     recentOrders,
   }
 }

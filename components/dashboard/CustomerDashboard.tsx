@@ -204,8 +204,27 @@ export default function CustomerDashboard({
       {/* Orders modal */}
       {modal === 'orders' && (
         <Modal title="Orders" onClose={() => setModal(null)}>
-          <MetricRow label="Total orders" value={orders?.totalOrders ?? 0} />
+          {/* Summary stats */}
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            <div className="bg-gray-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-gray-400 mb-1">Total</p>
+              <p className="text-xl font-semibold text-primo-dark">{orders?.totalOrders ?? 0}</p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-gray-400 mb-1">Last 6 months</p>
+              <p className="text-xl font-semibold text-primo-dark">{orders?.ordersLast6m ?? 0}</p>
+              {(orders?.amountLast6m ?? 0) > 0 && (
+                <p className="text-xs text-[#0EC8CC] mt-0.5">{Math.round(orders!.amountLast6m).toLocaleString('fr-FR')} €</p>
+              )}
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 text-center">
+              <p className="text-xs text-gray-400 mb-1">Countries</p>
+              <p className="text-xl font-semibold text-primo-dark">{orders?.shippedCountries ?? '—'}</p>
+            </div>
+          </div>
+
           <MetricRow label="Last order" value={formatDate(orders?.lastOrderDate ?? null)} />
+
           {(orders?.recentOrders?.length ?? 0) > 0 && (
             <div className="mt-4">
               <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Recent orders</p>

@@ -65,5 +65,8 @@ export interface OrderRecord {
 export interface OrdersMetrics {
   totalOrders: number
   lastOrderDate: string | null
+  ordersLast6m: number
+  amountLast6m: number
+  shippedCountries: number
   recentOrders: OrderRecord[]
 }
