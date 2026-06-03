@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+:root {
+  --primo-teal: #0EC8CC;
+  --primo-dark: #1B1F3B;
+  --primo-bg: #F0F4F8;
+}
+
+@theme inline {
+  --color-primo-teal: var(--primo-teal);
+  --color-primo-dark: var(--primo-dark);
+  --color-primo-bg: var(--primo-bg);
+  --font-sans: var(--font-geist);
+}
+
+body {
+  background: var(--primo-bg);
+  color: var(--primo-dark);
+  font-family: var(--font-geist), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
