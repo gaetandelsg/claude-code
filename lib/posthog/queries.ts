@@ -122,6 +122,7 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
   const summaryRow = firstRow(summaryResult)
   const sixMonthRow = firstRow(sixMonthResult)
   const countriesRow = firstRow(countriesResult)
+  console.log('[orders debug] groupKey:', groupKey, 'totalOrders:', summaryRow[0])
 
   const recentOrders: OrderRecord[] = recentResult.results.map((row) => {
     let products: OrderProduct[] = []
