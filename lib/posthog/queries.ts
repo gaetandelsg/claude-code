@@ -8,8 +8,8 @@ async function runHogQL(query: string): Promise<HogQLResult> {
   })
 }
 
-function firstRow(result: HogQLResult): unknown[] {
-  return result.results[0] ?? []
+function firstRow(result: HogQLResult | null): unknown[] {
+  return (result?.results ?? [])[0] ?? []
 }
 
 export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetrics> {
@@ -69,7 +69,7 @@ export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
       FROM mongodb.viewdevice
       WHERE companyId = '${gk}'
         AND availableStatus != 'RETIRED'
-    `),
+    `).catch(() => null),
     runHogQL(`
       SELECT committedDeviceCount
       FROM mongodb.viewcompanymetrics
@@ -79,7 +79,7 @@ export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
   ])
 
   return {
-    enrolledDeviceCount: Number(firstRow(enrolledResult)[0] ?? 0),
+    enrolledDeviceCount: enrolledResult ? Number(firstRow(enrolledResult)[0] ?? 0) : null,
     committedDeviceCount: committedResult ? (Number(firstRow(committedResult)[0]) || null) : null,
   }
 }

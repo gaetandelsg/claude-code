@@ -40,7 +40,7 @@ export interface AdminRecord {
 }
 
 export interface MdmMetrics {
-  enrolledDeviceCount: number
+  enrolledDeviceCount: number | null
   committedDeviceCount: number | null
 }
 

@@ -141,7 +141,15 @@ export default function CustomerDashboard({
           <ProductTile
             label="MDM"
             active={hasMDM}
-            summary={hasMDM ? `${enrolledPct} enrolled` : 'Not activated'}
+            summary={
+              hasMDM
+                ? devicesEnrolledCount != null && committedDeviceCount != null
+                  ? `${enrolledPct} enrolled`
+                  : devicesEnrolledCount != null
+                  ? `${devicesEnrolledCount} enrolled`
+                  : 'Activated'
+                : 'Not activated'
+            }
             onClick={() => setModal('mdm')}
           />
           <ProductTile
@@ -172,8 +180,10 @@ export default function CustomerDashboard({
           <MetricRow
             label="Devices enrolled"
             value={
-              devicesEnrolledCount != null && committedDeviceCount != null
-                ? `${devicesEnrolledCount} / ${committedDeviceCount} (${enrolledPct})`
+              devicesEnrolledCount != null
+                ? committedDeviceCount != null
+                  ? `${devicesEnrolledCount} / ${committedDeviceCount} (${enrolledPct})`
+                  : String(devicesEnrolledCount)
                 : '—'
             }
           />
