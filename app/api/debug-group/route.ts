@@ -16,17 +16,40 @@ async function hogql(query: string) {
     body: JSON.stringify({ query: { kind: 'HogQLQuery', query } }),
     cache: 'no-store',
   })
-  const body = await res.json()
-  // Return full body so we can see errors in any format
-  return body
+  return res.json()
 }
 
 export async function GET(req: NextRequest) {
   const gk = (req.nextUrl.searchParams.get('gk') ?? '66e2a303876e32967a945e8d').replace(/'/g, "\\'")
 
-  // Discover actual column names — no WHERE so it doesn't fail on unknown columns
-  const metricsSchema = await hogql(`SELECT * FROM mongodb.viewcompanymetrics LIMIT 1`)
-  const deviceSchema = await hogql(`SELECT * FROM mongodb.viewdevice LIMIT 3`)
+  // Get this company's raw metrics record
+  const metricsRaw = await hogql(`
+    SELECT _id, data
+    FROM mongodb.viewcompanymetrics
+    WHERE _id = '${gk}'
+    LIMIT 1
+  `)
 
-  return NextResponse.json({ gk, metricsSchema, deviceSchema })
+  // Try dot notation for enrolled + committed from viewcompanymetrics
+  const metricsFields = await hogql(`
+    SELECT
+      data.devicesEnrolledCount,
+      data.committedDeviceCount,
+      data.deviceMdm.countMdmOn
+    FROM mongodb.viewcompanymetrics
+    WHERE _id = '${gk}'
+    LIMIT 1
+  `)
+
+  // Count enrolled from viewdevice with dot notation
+  const deviceCount = await hogql(`
+    SELECT
+      countIf(data.mdmStatus = 'MDM_ON') AS enrolled,
+      count() AS total
+    FROM mongodb.viewdevice
+    WHERE data.companyId = '${gk}'
+      AND data.availableStatus != 'RETIRED'
+  `)
+
+  return NextResponse.json({ gk, metricsRaw, metricsFields, deviceCount })
 }
