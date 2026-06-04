@@ -24,34 +24,9 @@ async function hogql(query: string) {
 export async function GET(req: NextRequest) {
   const gk = (req.nextUrl.searchParams.get('gk') ?? '66e2a303876e32967a945e8d').replace(/'/g, "\\'")
 
-  // 1. Sample one row from viewcompanymetrics for this company.
-  const metricsSample = await hogql(`
-    SELECT *
-    FROM mongodb.viewcompanymetrics
-    WHERE companyId = '${gk}'
-    LIMIT 1
-  `)
+  // Discover actual column names — no WHERE so it doesn't fail on unknown columns
+  const metricsSchema = await hogql(`SELECT * FROM mongodb.viewcompanymetrics LIMIT 1`)
+  const deviceSchema = await hogql(`SELECT * FROM mongodb.viewdevice LIMIT 3`)
 
-  // 2. MDM status breakdown from viewdevice for this company.
-  const mdmBreakdown = await hogql(`
-    SELECT mdmStatus, platform, count() AS c
-    FROM mongodb.viewdevice
-    WHERE companyId = '${gk}'
-      AND availableStatus != 'RETIRED'
-    GROUP BY mdmStatus, platform
-    ORDER BY platform, mdmStatus
-  `)
-
-  // 3. Total enrolled (MDM_ON) and total non-retired devices.
-  const mdmSummary = await hogql(`
-    SELECT
-      countIf(mdmStatus = 'MDM_ON') AS enrolled,
-      countIf(mdmStatus != 'MDM_ON' AND mdmStatus != 'READY_ZTD') AS not_enrolled,
-      count() AS total
-    FROM mongodb.viewdevice
-    WHERE companyId = '${gk}'
-      AND availableStatus != 'RETIRED'
-  `)
-
-  return NextResponse.json({ gk, metricsSample, mdmBreakdown, mdmSummary })
+  return NextResponse.json({ gk, metricsSchema, deviceSchema })
 }
