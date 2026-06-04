@@ -52,7 +52,7 @@ export default async function CustomerPage({
           hasIAM={p.hasIAM ?? false}
           ztdConfigured={p.ztdConfigured}
           devicesEnrolledCount={mdm?.enrolledDeviceCount ?? p.devicesEnrolledCount}
-          committedDeviceCount={p.committedDeviceCount}
+          committedDeviceCount={mdm?.committedDeviceCount ?? p.committedDeviceCount}
           cockpit={cockpit}
           orders={orders}
         />
