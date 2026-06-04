@@ -63,24 +63,19 @@ export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetr
 export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
   const gk = groupKey.replace(/'/g, "\\'")
 
-  const [enrolledResult, committedResult] = await Promise.all([
-    runHogQL(`
-      SELECT countIf(mdmStatus = 'MDM_ON') AS enrolled
-      FROM mongodb.viewdevice
-      WHERE companyId = '${gk}'
-        AND availableStatus != 'RETIRED'
-    `).catch(() => null),
-    runHogQL(`
-      SELECT committedDeviceCount
-      FROM mongodb.viewcompanymetrics
-      WHERE companyId = '${gk}'
-      LIMIT 1
-    `).catch(() => null),
-  ])
+  const result = await runHogQL(`
+    SELECT
+      countIf(data.mdmStatus = 'MDM_ON') AS enrolled,
+      count() AS total
+    FROM mongodb.viewdevice
+    WHERE data.companyId = '${gk}'
+      AND data.availableStatus != 'RETIRED'
+  `).catch(() => null)
 
+  const row = firstRow(result)
   return {
-    enrolledDeviceCount: enrolledResult ? Number(firstRow(enrolledResult)[0] ?? 0) : null,
-    committedDeviceCount: committedResult ? (Number(firstRow(committedResult)[0]) || null) : null,
+    enrolledDeviceCount: result && row[0] != null ? Number(row[0]) : null,
+    committedDeviceCount: null,
   }
 }
 
