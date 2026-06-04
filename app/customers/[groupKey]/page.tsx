@@ -4,7 +4,7 @@ import { fetchCockpitMetrics, fetchMdmMetrics, fetchOrdersMetrics } from '@/lib/
 import CustomerDashboard from '@/components/dashboard/CustomerDashboard'
 import Link from 'next/link'
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 export default async function CustomerPage({
   params,
