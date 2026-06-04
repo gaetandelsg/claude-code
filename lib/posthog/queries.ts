@@ -75,11 +75,22 @@ export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
   }
 }
 
+const EMPTY_RESULT: HogQLResult = { results: [], columns: [] }
+
+async function safeHogQL(label: string, query: string): Promise<HogQLResult> {
+  try {
+    return await runHogQL(query)
+  } catch (e) {
+    console.error(`[orders query failed: ${label}]`, String(e))
+    return EMPTY_RESULT
+  }
+}
+
 export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetrics> {
   const gk = groupKey.replace(/'/g, "\\'")
 
   const [summaryResult, sixMonthResult, countriesResult, recentResult] = await Promise.all([
-    runHogQL(`
+    safeHogQL('summary', `
       SELECT
         count()        AS total_orders,
         max(timestamp) AS last_order_date
@@ -87,7 +98,7 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
       WHERE event = 'order_placed'
         AND properties.company.id = '${gk}'
     `),
-    runHogQL(`
+    safeHogQL('sixMonth', `
       SELECT
         count()                                                         AS orders_6m,
         sum(toFloat64OrZero(toString(properties.order.priceNoVAT)))    AS amount_6m
@@ -96,7 +107,7 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
         AND properties.company.id = '${gk}'
         AND timestamp >= now() - INTERVAL 6 MONTH
     `),
-    runHogQL(`
+    safeHogQL('countries', `
       SELECT count(DISTINCT properties.order.shippingAddress.country) AS countries
       FROM events
       WHERE event = 'order_placed'
@@ -104,7 +115,7 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
         AND properties.order.shippingAddress.country IS NOT NULL
         AND properties.order.shippingAddress.country != ''
     `),
-    runHogQL(`
+    safeHogQL('recent', `
       SELECT
         properties.order.reference       AS reference,
         properties.order.priceNoVAT      AS price,
@@ -122,7 +133,6 @@ export async function fetchOrdersMetrics(groupKey: string): Promise<OrdersMetric
   const summaryRow = firstRow(summaryResult)
   const sixMonthRow = firstRow(sixMonthResult)
   const countriesRow = firstRow(countriesResult)
-  console.log('[orders debug] groupKey:', groupKey, 'totalOrders:', summaryRow[0])
 
   const recentOrders: OrderRecord[] = recentResult.results.map((row) => {
     let products: OrderProduct[] = []
