@@ -29,7 +29,7 @@ export async function phPost<T>(path: string, body: unknown): Promise<T> {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(body),
-    next: { revalidate: 300 },
+    cache: 'no-store',
   })
   if (!res.ok) throw new Error(`PostHog POST ${path} → ${res.status}`)
   return res.json() as Promise<T>
