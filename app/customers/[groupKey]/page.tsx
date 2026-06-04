@@ -25,9 +25,9 @@ export default async function CustomerPage({
   if (p.hasIAM) activeProducts.push('IAM')
 
   const [cockpit, mdm, orders] = await Promise.all([
-    fetchCockpitMetrics(groupKey).catch(() => null),
-    fetchMdmMetrics(groupKey).catch(() => null),
-    fetchOrdersMetrics(groupKey).catch(() => null),
+    fetchCockpitMetrics(groupKey).catch((e) => { console.error('[cockpit]', String(e)); return null }),
+    fetchMdmMetrics(groupKey).catch((e) => { console.error('[mdm]', String(e)); return null }),
+    fetchOrdersMetrics(groupKey).catch((e) => { console.error('[orders]', String(e)); return null }),
   ])
 
   return (
