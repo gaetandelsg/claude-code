@@ -15,7 +15,7 @@ function firstRow(result: HogQLResult | null): unknown[] {
 export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetrics> {
   const gk = groupKey.replace(/'/g, "\\'")
 
-  const [adminsResult, onboardResult, offboardResult] = await Promise.all([
+  const [adminsResult, pendingResult] = await Promise.all([
     runHogQL(`
       SELECT
         person.properties.firstName  AS first_name,
@@ -31,19 +31,13 @@ export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetr
       LIMIT 20
     `),
     runHogQL(`
-      SELECT count(DISTINCT person.id) AS count
-      FROM events
-      WHERE $group_1 = '${gk}'
-        AND person.properties.hasPendingOnboarding = true
-        AND timestamp >= now() - INTERVAL 365 DAY
-    `),
-    runHogQL(`
-      SELECT count(DISTINCT person.id) AS count
-      FROM events
-      WHERE $group_1 = '${gk}'
-        AND person.properties.hasPendingOffboarding = true
-        AND timestamp >= now() - INTERVAL 365 DAY
-    `),
+      SELECT
+        data.employeesToOnboardCount,
+        data.employeesToOffboardCount
+      FROM mongodb.viewcompany
+      WHERE _id = '${gk}'
+      LIMIT 1
+    `).catch(() => null),
   ])
 
   const admins: AdminRecord[] = adminsResult.results.map((row) => ({
@@ -53,10 +47,11 @@ export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetr
     last_seen: (row[3] as string | null) ?? null,
   }))
 
+  const pendingRow = firstRow(pendingResult)
   return {
     admins,
-    pendingOnboardings: Number(firstRow(onboardResult)[0] ?? 0),
-    pendingOffboardings: Number(firstRow(offboardResult)[0] ?? 0),
+    pendingOnboardings: pendingResult ? Number(pendingRow[0] ?? 0) : 0,
+    pendingOffboardings: pendingResult ? Number(pendingRow[1] ?? 0) : 0,
   }
 }
 
