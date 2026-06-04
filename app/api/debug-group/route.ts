@@ -17,43 +17,40 @@ async function hogql(query: string) {
     cache: 'no-store',
   })
   const body = await res.json()
-  return body.error ? { error: body.error } : body.results
+  return body.error ? { error: body.error, detail: body.detail } : body.results
 }
 
 export async function GET(req: NextRequest) {
   const gk = (req.nextUrl.searchParams.get('gk') ?? '66e2a303876e32967a945e8d').replace(/'/g, "\\'")
 
-  // 1. Every event name that looks device / MDM / enrollment / license related, with counts.
-  const eventCatalog = await hogql(`
-    SELECT event, count() AS c
-    FROM events
-    WHERE event ILIKE '%device%'
-       OR event ILIKE '%mdm%'
-       OR event ILIKE '%enroll%'
-       OR event ILIKE '%licen%'
-       OR event ILIKE '%seat%'
-    GROUP BY event
-    ORDER BY c DESC
-    LIMIT 50
-  `)
-
-  // 2. For this company, count instance_mdm_deployed_configured events.
-  const mdmConfigCount = await hogql(`
-    SELECT count()
-    FROM events
-    WHERE event = 'instance_mdm_deployed_configured'
-      AND properties.id = '${gk}'
-  `)
-
-  // 3. Sample one instance_mdm_deployed_configured event's full properties for this company.
-  const mdmSample = await hogql(`
-    SELECT properties
-    FROM events
-    WHERE event = 'instance_mdm_deployed_configured'
-      AND properties.id = '${gk}'
-    ORDER BY timestamp DESC
+  // 1. Sample one row from viewcompanymetrics for this company.
+  const metricsSample = await hogql(`
+    SELECT *
+    FROM mongodb.viewcompanymetrics
+    WHERE companyId = '${gk}'
     LIMIT 1
   `)
 
-  return NextResponse.json({ gk, eventCatalog, mdmConfigCount, mdmSample })
+  // 2. MDM status breakdown from viewdevice for this company.
+  const mdmBreakdown = await hogql(`
+    SELECT mdmStatus, platform, count() AS c
+    FROM mongodb.viewdevice
+    WHERE companyId = '${gk}'
+      AND availableStatus != 'RETIRED'
+    GROUP BY mdmStatus, platform
+    ORDER BY platform, mdmStatus
+  `)
+
+  // 3. Total enrolled (MDM_ON) and total non-retired devices.
+  const mdmSummary = await hogql(`
+    SELECT
+      countIf(mdmStatus = 'MDM_ON') AS enrolled,
+      countIf(mdmStatus != 'MDM_ON' AND mdmStatus != 'READY_ZTD') AS not_enrolled,
+      count() AS total
+    FROM mongodb.viewdevice
+    WHERE companyId = '${gk}'
+      AND availableStatus != 'RETIRED'
+  `)
+
+  return NextResponse.json({ gk, metricsSample, mdmBreakdown, mdmSummary })
 }
