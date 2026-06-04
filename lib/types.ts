@@ -41,6 +41,7 @@ export interface AdminRecord {
 
 export interface MdmMetrics {
   enrolledDeviceCount: number
+  committedDeviceCount: number | null
 }
 
 export interface CockpitMetrics {
