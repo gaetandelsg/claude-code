@@ -17,7 +17,8 @@ async function hogql(query: string) {
     cache: 'no-store',
   })
   const body = await res.json()
-  return body.error ? { error: body.error, detail: body.detail } : body.results
+  // Return full body so we can see errors in any format
+  return body
 }
 
 export async function GET(req: NextRequest) {
