@@ -63,13 +63,13 @@ export async function fetchCockpitMetrics(groupKey: string): Promise<CockpitMetr
 export async function fetchMdmMetrics(groupKey: string): Promise<MdmMetrics> {
   const gk = groupKey.replace(/'/g, "\\'")
 
+  // viewcompanymetrics is pre-aggregated per company — single row lookup, much faster
+  // than scanning viewdevice rows.
   const result = await runHogQL(`
-    SELECT
-      countIf(data.mdmStatus = 'MDM_ON') AS enrolled,
-      count() AS total
-    FROM mongodb.viewdevice
-    WHERE data.companyId = '${gk}'
-      AND data.availableStatus != 'RETIRED'
+    SELECT data.deviceMdm.countMdmOn AS enrolled
+    FROM mongodb.viewcompanymetrics
+    WHERE _id = '${gk}'
+    LIMIT 1
   `).catch(() => null)
 
   const row = firstRow(result)
